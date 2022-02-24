@@ -6,6 +6,7 @@ import jwt
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'thisissecret'
 
+
 def check_for_token(func):
 
     @wraps(func)
@@ -13,10 +14,11 @@ def check_for_token(func):
         token = request.args.get('token')
         if not token:
             return jsonify({'message': 'Token is missing!'}), 403
-        try:
-            data = jwt.decode(token, app.config['SECRET_KEY'])
-        except:
-            return jsonify({'message': "Invalid token"}), 403
+        
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        print(data)
+        # except:
+        #     return jsonify({'message': "Invalid token"}), 403
         return func(*args, **kwargs)
     return wrapped
 
@@ -24,11 +26,11 @@ def check_for_token(func):
 @app.route('/')
 def index():
 
-    if not session.get('logged_in'):
-        return render_template('index.html')
+    # if not session.get('logged_in'):
+    return render_template('index.html')
 
-    else:
-        return "Currently logged in"
+    # else:
+    #     return "Currently logged in"
 
 @app.route('/public')
 def public():
@@ -47,9 +49,10 @@ def login():
         session['logged_in'] = True
         token = jwt.encode ({
             'user'  : request.form['username'],
-            'exp'   : datetime.datetime.utcnow() + datetime.timedelta(seconds=15)
+            'exp'   : datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
         },
-        app.config['SECRET_KEY']
+        app.config['SECRET_KEY'],
+        algorithm="HS256"
         )
         return jsonify({'token': token})
         
